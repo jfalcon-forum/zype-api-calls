@@ -24,6 +24,7 @@ const getLivestreamAccess = async (userId) => {
   
   const response = axios.request(options).then((response) => {
     // response should be true/false then return out a response
+    console.log(response.data)
     return response.data
   }).catch((error) => {
     if (error) {

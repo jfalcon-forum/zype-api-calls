@@ -1,27 +1,28 @@
-const axios = require("axios").default
-const jwt_decode = require('jwt-decode')
-const { getLivestreamAccess} = require('./naviga-livestream')
-const { getAccessToken } = require('./auth0')
+const { getLivestreamAccess} = require('./naviga-livestream');
 
-const oauthEndpoint = async (email, password) => {
-  const response = await getAccessToken(email, password)
-  let decodedToken = await jwt_decode(response.access_token)
-  let authId = await decodedToken.sub
-  const livestreamAccess = await getLivestreamAccess(authId)
-  let responseObj = {
-    ...response,
-    ...livestreamAccess
+const navigaCall = async (id) => {
+  if (id === null || id === "" || id === undefined) {
+    return {
+      "status": 204,
+      "message": "Invalid ID"
+    }
   }
-  console.log(responseObj)
-  return responseObj;
+  const navResponse = await getLivestreamAccess(id)
+  if (navResponse.Errors.length > 1) {
+    return {
+      "status": 203,
+      "message": navResponse.Errors[0].Message
+    }
+  }
+  if (navResponse.Result.IsAuthorized) {
+    return {
+      "status": 200,
+      ...navResponse,
+    } 
+  }
 }
 
-const authorizeEndpoint = async (token) => {
-  let decodedToken = await jwt_decode(token)
-  let authId = await decodedToken.sub
-  const livestreamAccess = await getLivestreamAccess(authId)
-  console.log(livestreamAccess)
-  return livestreamAccess; 
-}
-
-// Call oauthEndpoint first to get a token, then use that token to test the authorizeEndpoint
+exports.handler = async (event, context) => {
+  const response = await navigaCall(event.id);
+  return response;
+};
